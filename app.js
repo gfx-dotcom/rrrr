@@ -915,9 +915,19 @@ class TradingSystem {
         const risk = parseFloat(document.getElementById('calcRiskAmount').value) || 0;
         const r = parseFloat(document.getElementById('calcRRR').value) || 0;
         const p = parseFloat(document.getElementById('calcPercent').value) || 0;
+        const lotSize = parseFloat(document.getElementById('calcLotSize').value) || 0;
 
         const profit = risk * r * (p / 100);
         document.getElementById('calcResult').textContent = this.formatCurrency(profit);
+
+        // Lot hesaplama - MT5 mobil için
+        if (lotSize > 0 && p > 0) {
+            const lotsToClose = (lotSize * p / 100).toFixed(2);
+            document.getElementById('lotResult').textContent = `${lotsToClose} lot`;
+            document.getElementById('lotResultBox').style.display = 'block';
+        } else {
+            document.getElementById('lotResultBox').style.display = 'none';
+        }
     }
 
     toggleTradeInputs(result) {
