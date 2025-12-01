@@ -553,6 +553,12 @@ class TradingSystem {
         document.getElementById('currentProfit').textContent = this.formatCurrency(this.getNetProfit());
         document.getElementById('remainingProfit').textContent = this.formatCurrency(this.getRemainingProfit());
 
+        // Update Target Growth Label
+        const targetGrowthLabel = document.getElementById('targetGrowthLabel');
+        if (targetGrowthLabel) {
+            targetGrowthLabel.textContent = `%${this.settings.targetGrowth} Büyüme Hedefi`;
+        }
+
         // Progress
         const progress = this.getProgressPercentage();
         document.getElementById('progressPercentage').textContent = `${progress.toFixed(1)}%`;
