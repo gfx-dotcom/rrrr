@@ -910,20 +910,209 @@ small {
 }
 
 /* ===================================
-   RESPONSIVE
+   RESPONSIVE - MOBILE OPTIMIZATION
    =================================== */
 @media (max-width: 768px) {
+
+    /* Container & Spacing */
+    .container {
+        padding: 0 var(--spacing-sm);
+    }
+
+    section {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    /* Header */
+    .header-content {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .settings-btn {
+        flex: 1;
+    }
+
+    /* Section Headers */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .section-header h2 {
+        font-size: 0.9rem;
+    }
+
+    .calculator-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Target Grid */
+    .target-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-value {
+        font-size: 1.5rem;
+    }
+
+    /* Chart */
+    .chart-container {
+        height: 250px;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    /* Multi TP Rows - MOBILE OPTIMIZED */
+    .tp-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        padding-top: calc(var(--spacing-md) + 24px);
+        background-color: var(--bg-input);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-sm);
+        position: relative;
+    }
+
+    .tp-row .form-group {
+        margin: 0;
+    }
+
+    .tp-row input {
+        width: 100%;
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    .remove-tp-btn {
+        position: absolute;
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+        z-index: 1;
+    }
+
+    .add-tp-btn {
+        width: 100%;
+        padding: var(--spacing-sm);
+        text-align: center;
+    }
+
+    .form-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+
+    .form-header-row label {
+        font-size: 0.9rem;
+    }
+
+    /* Trade Details */
     .trade-details {
         grid-template-columns: 1fr;
     }
 
+    /* Trade Item */
+    .trade-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .trade-badges {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .pagination-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+        padding: var(--spacing-md);
+    }
+
+    /* Form Actions */
     .form-actions {
         flex-direction: column;
+        gap: var(--spacing-sm);
     }
 
     .btn-primary,
     .btn-secondary,
     .btn-danger {
         width: 100%;
+    }
+
+    /* Feedback */
+    .feedback-card {
+        flex-direction: column;
+    }
+
+    .feedback-icon {
+        font-size: 1.2rem;
+    }
+
+    .feedback-title {
+        font-size: 0.85rem;
+    }
+
+    .feedback-message {
+        font-size: 0.8rem;
+    }
+
+    /* Logo */
+    .logo-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .logo-text h1 {
+        font-size: 1.1rem;
+    }
+
+    .logo-text p {
+        font-size: 0.75rem;
+    }
+
+    /* Input & Select - iOS Zoom Prevention */
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    /* Calculator Result */
+    .calc-result-value {
+        font-size: 1.3rem;
     }
 }
