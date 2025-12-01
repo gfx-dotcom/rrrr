@@ -1,7 +1,7 @@
 /* ===================================
-   RUNNER R-PERFORMANCE TRACKER V2.0
+   RUNNER R-PERFORMANCE TRACKER V2.1
    Advanced Trading Analytics System
-   With Flexible Strategy & Deviation Tracking
+   With Multi-TP, Calculator & Light Mode
    =================================== */
 
 // ===================================
@@ -52,10 +52,34 @@ class TradingSystem {
 
     // Initialize System
     init() {
+        this.initTheme();
         this.setupEventListeners();
         this.initChart();
         this.updateDashboard();
         this.renderTradeHistory();
+    }
+
+    // ===================================
+    // THEME SYSTEM
+    // ===================================
+    initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }
+
+    toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const newTheme = current === 'light' ? 'dark' : 'light';
+
+        if (newTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+
+        localStorage.setItem('theme', newTheme);
     }
 
     // ===================================
@@ -209,6 +233,39 @@ class TradingSystem {
         }
     }
 
+    // Calculate Multi-TP Result
+    calculateMultiTPResult(tpRows) {
+        const riskAmount = this.getFixedRiskAmount();
+        let totalProfit = 0;
+        let totalPercent = 0;
+        const closes = [];
+
+        tpRows.forEach(row => {
+            const profit = (row.percent / 100) * row.rrr * riskAmount;
+            totalProfit += profit;
+            totalPercent += row.percent;
+            closes.push({
+                rrr: row.rrr,
+                percent: row.percent,
+                profit: profit
+            });
+        });
+
+        // If total percent < 100, the rest is assumed closed at 0 (BE) or lost?
+        // Usually in a "Win" scenario with Multi-TP, user enters all profitable closes.
+        // If there's remaining % that hit SL/BE, they should add a row with 0 RRR or negative?
+        // For simplicity, we assume the entered rows are the realized gains.
+
+        return {
+            total: totalProfit,
+            breakdown: {
+                isMultiTP: true,
+                closes: closes,
+                totalPercent: totalPercent
+            }
+        };
+    }
+
     // Calculate Current Balance
     getCurrentBalance() {
         const totalProfitLoss = this.trades.reduce((sum, trade) => sum + trade.profitLoss, 0);
@@ -233,6 +290,11 @@ class TradingSystem {
         if (winningTrades.length === 0) return 0;
 
         const totalRRR = winningTrades.reduce((sum, trade) => {
+            if (trade.breakdown?.isMultiTP) {
+                // Weighted average RRR for multi-TP
+                const weightedSum = trade.breakdown.closes.reduce((acc, close) => acc + (close.rrr * close.percent), 0);
+                return sum + (weightedSum / trade.breakdown.totalPercent);
+            }
             return sum + (trade.breakdown?.runnerCloseRRR || 0);
         }, 0);
         return totalRRR / winningTrades.length;
@@ -370,7 +432,7 @@ class TradingSystem {
         }
 
         // Strategy Deviation Warnings (for win/be trades)
-        if ((trade.result === 'win' || trade.result === 'be') && trade.breakdown) {
+        if ((trade.result === 'win' || trade.result === 'be') && trade.breakdown && !trade.breakdown.isMultiTP) {
             const deviationWarnings = this.analyzeStrategyDeviation(
                 trade.breakdown.firstCloseRRR,
                 trade.breakdown.firstClosePercent
@@ -382,14 +444,23 @@ class TradingSystem {
         }
 
         // Big Runner Caught
-        if (trade.result === 'win' && trade.breakdown && trade.breakdown.runnerCloseRRR >= 4.0) {
-            const lossesCompensated = Math.floor(trade.profitLoss / this.getFixedRiskAmount());
-            return {
-                type: 'success',
-                icon: '🚀',
-                title: 'SÜPER RUNNER!',
-                message: `HARIKA! Bu ${trade.breakdown.runnerCloseRRR.toFixed(1)}R koşucu, ${lossesCompensated} adet kaybın maliyetini tek başına çıkardı. Hedefinize büyük bir adım attınız! (+${this.formatCurrency(trade.profitLoss)})`
-            };
+        if (trade.result === 'win' && trade.breakdown) {
+            let maxRRR = 0;
+            if (trade.breakdown.isMultiTP) {
+                maxRRR = Math.max(...trade.breakdown.closes.map(c => c.rrr));
+            } else {
+                maxRRR = trade.breakdown.runnerCloseRRR;
+            }
+
+            if (maxRRR >= 4.0) {
+                const lossesCompensated = Math.floor(trade.profitLoss / this.getFixedRiskAmount());
+                return {
+                    type: 'success',
+                    icon: '🚀',
+                    title: 'SÜPER RUNNER!',
+                    message: `HARIKA! Bu ${maxRRR.toFixed(1)}R koşucu, ${lossesCompensated} adet kaybın maliyetini tek başına çıkardı. Hedefinize büyük bir adım attınız! (+${this.formatCurrency(trade.profitLoss)})`
+                };
+            }
         }
 
         // Consecutive Losses
@@ -409,16 +480,6 @@ class TradingSystem {
                 icon: '💡',
                 title: 'RUNNER POTANSİYELİNİ ARTIRIN',
                 message: `Risk Yönetimi Mükemmel (${beCount} BE). Ancak Runner potansiyelinizi artırmalısınız (Ort. RRR: ${this.getAverageRRR().toFixed(2)}R). Daha geniş zaman dilimlerinde veya ana trend yönünde işlem aramayı deneyin.`
-            };
-        }
-
-        // Good Win
-        if (trade.result === 'win' && trade.breakdown && trade.breakdown.runnerCloseRRR >= 2.0) {
-            return {
-                type: 'success',
-                icon: '✅',
-                title: 'GÜZEL KAZANÇ!',
-                message: `${trade.breakdown.runnerCloseRRR.toFixed(1)}R ile güzel bir kazanç elde ettiniz (+${this.formatCurrency(trade.profitLoss)}). Hedefe ${this.formatCurrency(this.getRemainingProfit())} kaldı. Devam edin!`
             };
         }
 
@@ -449,17 +510,12 @@ class TradingSystem {
     // TRADE MANAGEMENT
     // ===================================
 
-    addTrade(result, firstCloseRRR, firstClosePercent, runnerCloseRRR, notes = '') {
-        const calculation = this.calculateTradeResult(result, firstCloseRRR, firstClosePercent, runnerCloseRRR);
-
+    addTrade(tradeData) {
         const trade = {
             id: Date.now(),
             timestamp: new Date().toISOString(),
-            result: result,
-            profitLoss: calculation.total,
-            breakdown: calculation.breakdown,
-            notes: notes,
-            balance: this.getCurrentBalance() + calculation.total
+            ...tradeData,
+            balance: this.getCurrentBalance() + tradeData.profitLoss
         };
 
         this.trades.push(trade);
@@ -625,9 +681,6 @@ class TradingSystem {
         document.getElementById('nextPageBtn').disabled = this.currentPage === totalPages;
 
         container.innerHTML = pageTrades.map((trade, index) => {
-            // Calculate actual trade number (newest first logic)
-            // If we have 10 trades, index 0 on page 1 is trade #10
-            // index 0 on page 2 (start=5) is trade #5
             const tradeNumber = sortedTrades.length - (start + index);
 
             const resultText = {
@@ -637,11 +690,10 @@ class TradingSystem {
             }[trade.result];
 
             const resultClass = trade.result;
-            const profitClass = trade.profitLoss > 0 ? 'positive' : trade.profitLoss < 0 ? 'negative' : '';
 
             // Strategy compliance badge
             let strategyBadge = '';
-            if ((trade.result === 'win' || trade.result === 'be') && trade.breakdown) {
+            if (!trade.breakdown?.isMultiTP && (trade.result === 'win' || trade.result === 'be') && trade.breakdown) {
                 const rrrDiff = Math.abs((trade.breakdown.firstCloseRRR || 0) - this.settings.rLevel);
                 const percentDiff = Math.abs((trade.breakdown.firstClosePercent || 0) - this.settings.lockPercentage);
 
@@ -650,11 +702,33 @@ class TradingSystem {
                 } else {
                     strategyBadge = '<span class="strategy-badge deviated">⚠️ Sapma Var</span>';
                 }
+            } else if (trade.breakdown?.isMultiTP) {
+                strategyBadge = '<span class="strategy-badge compliant">🔄 Çoklu TP</span>';
             }
 
             // Detailed breakdown
             let breakdownHTML = '';
-            if (trade.result === 'win' && trade.breakdown) {
+
+            if (trade.breakdown?.isMultiTP) {
+                // Multi-TP Breakdown
+                const rowsHTML = trade.breakdown.closes.map((close, i) => `
+                    <div class="breakdown-item">
+                        <span>TP ${i + 1} (${close.rrr}R @ %${close.percent}):</span>
+                        <span class="positive">+${this.formatCurrency(close.profit)}</span>
+                    </div>
+                `).join('');
+
+                breakdownHTML = `
+                    <div class="trade-breakdown">
+                        <div class="breakdown-title">🔄 Çoklu Kar Alımı:</div>
+                        ${rowsHTML}
+                        <div class="breakdown-total">
+                            <span>Toplam Kar (%${trade.breakdown.totalPercent}):</span>
+                            <span class="positive">+${this.formatCurrency(trade.profitLoss)}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (trade.result === 'win' && trade.breakdown) {
                 breakdownHTML = `
                     <div class="trade-breakdown">
                         <div class="breakdown-title">💰 Kar Dağılımı:</div>
@@ -738,6 +812,11 @@ class TradingSystem {
     // ===================================
 
     setupEventListeners() {
+        // Theme Toggle
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            this.toggleTheme();
+        });
+
         // Settings Modal
         document.getElementById('settingsBtn').addEventListener('click', () => {
             this.openSettingsModal();
@@ -751,6 +830,24 @@ class TradingSystem {
             this.closeSettingsModal();
         });
 
+        // Calculator Modal
+        document.getElementById('openCalcBtn').addEventListener('click', () => {
+            document.getElementById('calcRiskAmount').value = this.getFixedRiskAmount().toFixed(0);
+            document.getElementById('calcModal').classList.add('active');
+        });
+
+        document.getElementById('calcModalClose').addEventListener('click', () => {
+            document.getElementById('calcModal').classList.remove('active');
+        });
+
+        document.getElementById('calcModalOverlay').addEventListener('click', () => {
+            document.getElementById('calcModal').classList.remove('active');
+        });
+
+        document.getElementById('calculateBtn').addEventListener('click', () => {
+            this.calculateProfit();
+        });
+
         // Settings Form
         document.getElementById('settingsForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -762,7 +859,6 @@ class TradingSystem {
         });
 
         document.getElementById('clearAllData').addEventListener('click', () => {
-            console.log('Clear All Data button clicked');
             this.performFullReset();
         });
 
@@ -774,6 +870,14 @@ class TradingSystem {
 
         document.getElementById('tradeResult').addEventListener('change', (e) => {
             this.toggleTradeInputs(e.target.value);
+        });
+
+        document.getElementById('multiTPToggle').addEventListener('change', (e) => {
+            this.toggleMultiTP(e.target.value);
+        });
+
+        document.getElementById('addTPRowBtn').addEventListener('click', () => {
+            this.addTPRow();
         });
 
         // Clear History
@@ -791,6 +895,16 @@ class TradingSystem {
         });
     }
 
+    // Calculator Logic
+    calculateProfit() {
+        const risk = parseFloat(document.getElementById('calcRiskAmount').value) || 0;
+        const r = parseFloat(document.getElementById('calcRRR').value) || 0;
+        const p = parseFloat(document.getElementById('calcPercent').value) || 0;
+
+        const profit = risk * r * (p / 100);
+        document.getElementById('calcResult').textContent = this.formatCurrency(profit);
+    }
+
     toggleTradeInputs(result) {
         // Hide all conditional inputs
         document.getElementById('firstCloseRRRGroup').style.display = 'none';
@@ -798,6 +912,8 @@ class TradingSystem {
         document.getElementById('runnerCloseRRRGroup').style.display = 'none';
         document.getElementById('beCloseRRRGroup').style.display = 'none';
         document.getElementById('beClosePercentGroup').style.display = 'none';
+        document.getElementById('multiTPToggleGroup').style.display = 'none';
+        document.getElementById('multiTPContainer').style.display = 'none';
 
         // Clear required attributes
         document.getElementById('firstCloseRRR').required = false;
@@ -806,15 +922,13 @@ class TradingSystem {
         document.getElementById('beCloseRRR').required = false;
         document.getElementById('beClosePercent').required = false;
 
+        // Reset Multi TP
+        document.getElementById('multiTPToggle').value = 'no';
+
         // Show relevant inputs based on result
         if (result === 'win') {
-            document.getElementById('firstCloseRRRGroup').style.display = 'flex';
-            document.getElementById('firstClosePercentGroup').style.display = 'flex';
-            document.getElementById('runnerCloseRRRGroup').style.display = 'flex';
-
-            document.getElementById('firstCloseRRR').required = true;
-            document.getElementById('firstClosePercent').required = true;
-            document.getElementById('runnerCloseRRR').required = true;
+            document.getElementById('multiTPToggleGroup').style.display = 'flex';
+            this.toggleMultiTP('no'); // Default to standard
         } else if (result === 'be') {
             document.getElementById('beCloseRRRGroup').style.display = 'flex';
             document.getElementById('beClosePercentGroup').style.display = 'flex';
@@ -824,9 +938,82 @@ class TradingSystem {
         }
     }
 
+    toggleMultiTP(value) {
+        if (value === 'yes') {
+            // Show Multi TP, Hide Standard
+            document.getElementById('firstCloseRRRGroup').style.display = 'none';
+            document.getElementById('firstClosePercentGroup').style.display = 'none';
+            document.getElementById('runnerCloseRRRGroup').style.display = 'none';
+
+            document.getElementById('firstCloseRRR').required = false;
+            document.getElementById('firstClosePercent').required = false;
+            document.getElementById('runnerCloseRRR').required = false;
+
+            document.getElementById('multiTPContainer').style.display = 'block';
+
+            // Add initial rows if empty
+            const container = document.getElementById('tpRows');
+            if (container.children.length === 0) {
+                this.addTPRow();
+                this.addTPRow();
+            }
+        } else {
+            // Show Standard, Hide Multi TP
+            document.getElementById('firstCloseRRRGroup').style.display = 'flex';
+            document.getElementById('firstClosePercentGroup').style.display = 'flex';
+            document.getElementById('runnerCloseRRRGroup').style.display = 'flex';
+
+            document.getElementById('firstCloseRRR').required = true;
+            document.getElementById('firstClosePercent').required = true;
+            document.getElementById('runnerCloseRRR').required = true;
+
+            document.getElementById('multiTPContainer').style.display = 'none';
+        }
+    }
+
+    addTPRow() {
+        const container = document.getElementById('tpRows');
+        const rowId = Date.now();
+        const row = document.createElement('div');
+        row.className = 'tp-row';
+        row.innerHTML = `
+            <div class="form-group">
+                <input type="number" class="tp-rrr" placeholder="R Seviyesi (Örn: 1.5)" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <input type="number" class="tp-percent" placeholder="Yüzde % (Örn: 50)" max="100" required>
+            </div>
+            <button type="button" class="remove-tp-btn" onclick="this.parentElement.remove(); tradingSystem.updateTotalPercent()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        `;
+        container.appendChild(row);
+
+        // Add listeners for live total update
+        row.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', () => this.updateTotalPercent());
+        });
+    }
+
+    updateTotalPercent() {
+        let total = 0;
+        document.querySelectorAll('.tp-percent').forEach(input => {
+            total += parseFloat(input.value) || 0;
+        });
+        document.getElementById('totalTPPercent').textContent = total;
+
+        const totalEl = document.getElementById('totalTPPercent');
+        if (total > 100) totalEl.style.color = 'var(--accent-danger)';
+        else totalEl.style.color = 'var(--text-secondary)';
+    }
+
     submitTrade() {
         const result = document.getElementById('tradeResult').value;
         const notes = document.getElementById('tradeNotes').value.trim();
+        const isMultiTP = document.getElementById('multiTPToggle').value === 'yes';
 
         // Validation
         if (!result) {
@@ -834,41 +1021,85 @@ class TradingSystem {
             return;
         }
 
-        let firstCloseRRR = 0;
-        let firstClosePercent = 0;
-        let runnerCloseRRR = 0;
+        let tradeData = {
+            result: result,
+            notes: notes,
+            profitLoss: 0,
+            breakdown: {}
+        };
 
         if (result === 'win') {
-            firstCloseRRR = parseFloat(document.getElementById('firstCloseRRR').value);
-            firstClosePercent = parseFloat(document.getElementById('firstClosePercent').value);
-            runnerCloseRRR = parseFloat(document.getElementById('runnerCloseRRR').value);
+            if (isMultiTP) {
+                // Handle Multi TP
+                const rows = [];
+                let totalPercent = 0;
 
-            if (!firstCloseRRR || !firstClosePercent || !runnerCloseRRR) {
-                alert('Lütfen tüm kazanç bilgilerini girin');
-                return;
-            }
+                const rrrInputs = document.querySelectorAll('.tp-rrr');
+                const percentInputs = document.querySelectorAll('.tp-percent');
 
-            if (firstClosePercent < 0 || firstClosePercent > 100) {
-                alert('Kapanış yüzdesi 0-100 arasında olmalıdır');
-                return;
+                for (let i = 0; i < rrrInputs.length; i++) {
+                    const rrr = parseFloat(rrrInputs[i].value);
+                    const percent = parseFloat(percentInputs[i].value);
+
+                    if (!rrr || !percent) {
+                        alert('Lütfen tüm TP alanlarını doldurun');
+                        return;
+                    }
+
+                    rows.push({ rrr, percent });
+                    totalPercent += percent;
+                }
+
+                if (totalPercent > 100) {
+                    alert('Toplam yüzde 100\'ü geçemez!');
+                    return;
+                }
+
+                const calculation = this.calculateMultiTPResult(rows);
+                tradeData.profitLoss = calculation.total;
+                tradeData.breakdown = calculation.breakdown;
+
+            } else {
+                // Standard Win
+                const firstCloseRRR = parseFloat(document.getElementById('firstCloseRRR').value);
+                const firstClosePercent = parseFloat(document.getElementById('firstClosePercent').value);
+                const runnerCloseRRR = parseFloat(document.getElementById('runnerCloseRRR').value);
+
+                if (!firstCloseRRR || !firstClosePercent || !runnerCloseRRR) {
+                    alert('Lütfen tüm kazanç bilgilerini girin');
+                    return;
+                }
+
+                if (firstClosePercent < 0 || firstClosePercent > 100) {
+                    alert('Kapanış yüzdesi 0-100 arasında olmalıdır');
+                    return;
+                }
+
+                const calculation = this.calculateTradeResult(result, firstCloseRRR, firstClosePercent, runnerCloseRRR);
+                tradeData.profitLoss = calculation.total;
+                tradeData.breakdown = calculation.breakdown;
             }
         } else if (result === 'be') {
-            firstCloseRRR = parseFloat(document.getElementById('beCloseRRR').value);
-            firstClosePercent = parseFloat(document.getElementById('beClosePercent').value);
+            const firstCloseRRR = parseFloat(document.getElementById('beCloseRRR').value);
+            const firstClosePercent = parseFloat(document.getElementById('beClosePercent').value);
 
             if (!firstCloseRRR || !firstClosePercent) {
                 alert('Lütfen BE işlem bilgilerini girin');
                 return;
             }
 
-            if (firstClosePercent < 0 || firstClosePercent > 100) {
-                alert('Kapanış yüzdesi 0-100 arasında olmalıdır');
-                return;
-            }
+            const calculation = this.calculateTradeResult(result, firstCloseRRR, firstClosePercent, 0);
+            tradeData.profitLoss = calculation.total;
+            tradeData.breakdown = calculation.breakdown;
+        } else {
+            // Loss
+            const calculation = this.calculateTradeResult(result);
+            tradeData.profitLoss = calculation.total;
+            tradeData.breakdown = calculation.breakdown;
         }
 
         // Add Trade
-        const trade = this.addTrade(result, firstCloseRRR, firstClosePercent, runnerCloseRRR, notes);
+        const trade = this.addTrade(tradeData);
 
         // Update UI
         this.updateDashboard();
@@ -881,6 +1112,7 @@ class TradingSystem {
         // Reset Form
         document.getElementById('tradeForm').reset();
         this.toggleTradeInputs('');
+        document.getElementById('tpRows').innerHTML = ''; // Clear TP rows
 
         // Scroll to feedback if exists
         if (feedback) {
@@ -1042,5 +1274,5 @@ let tradingSystem;
 
 document.addEventListener('DOMContentLoaded', () => {
     tradingSystem = new TradingSystem();
-    console.log('🚀 Runner R-Performance Tracker V2.0 initialized successfully!');
+    console.log('🚀 Runner R-Performance Tracker V2.1 initialized successfully!');
 });

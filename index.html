@@ -28,15 +28,24 @@
                         <p>Performance Analytics</p>
                     </div>
                 </div>
-                <button class="settings-btn" id="settingsBtn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M12 1v6m0 6v6m0-18a9 9 0 0 1 9 9m-9-9a9 9 0 0 0-9 9m9 9a9 9 0 0 1-9-9m9 9a9 9 0 0 0 9-9">
-                        </path>
-                    </svg>
-                    Ayarlar
-                </button>
+                <div class="header-actions">
+                    <button class="theme-btn" id="themeBtn" title="Temayı Değiştir">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    <button class="settings-btn" id="settingsBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M12 1v6m0 6v6m0-18a9 9 0 0 1 9 9m-9-9a9 9 0 0 0-9 9m9 9a9 9 0 0 1-9-9m9 9a9 9 0 0 0 9-9">
+                            </path>
+                        </svg>
+                        Ayarlar
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -163,6 +172,20 @@
             <section class="entry-section">
                 <div class="section-header">
                     <h2>➕ YENİ İŞLEM KAYDI</h2>
+                    <button class="calculator-btn" id="openCalcBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                            <line x1="8" y1="6" x2="16" y2="6"></line>
+                            <line x1="16" y1="14" x2="16" y2="14"></line>
+                            <line x1="8" y1="14" x2="8" y2="14"></line>
+                            <line x1="12" y1="14" x2="12" y2="14"></line>
+                            <line x1="8" y1="18" x2="8" y2="18"></line>
+                            <line x1="12" y1="18" x2="12" y2="18"></line>
+                            <line x1="16" y1="18" x2="16" y2="18"></line>
+                        </svg>
+                        Hesap Makinesi
+                    </button>
                 </div>
 
                 <form class="trade-form" id="tradeForm">
@@ -175,6 +198,28 @@
                                 <option value="be">⚖️ Başa Baş (BE)</option>
                                 <option value="win">✅ Kazanç (Win)</option>
                             </select>
+                        </div>
+
+                        <!-- Multi TP Toggle -->
+                        <div class="form-group" id="multiTPToggleGroup" style="display: none;">
+                            <label for="multiTPToggle">Çoklu Kar Alımı?</label>
+                            <select id="multiTPToggle">
+                                <option value="no">Hayır (Standart)</option>
+                                <option value="yes">Evet (Gelişmiş)</option>
+                            </select>
+                        </div>
+
+                        <!-- Multi TP Container -->
+                        <div class="multi-tp-container" id="multiTPContainer" style="display: none;">
+                            <div class="form-header-row">
+                                <label>Kar Alım Seviyeleri</label>
+                                <button type="button" class="add-tp-btn" id="addTPRowBtn">+ Yeni Seviye Ekle</button>
+                            </div>
+                            <div id="tpRows">
+                                <!-- Dynamic Rows Will Be Added Here -->
+                            </div>
+                            <small style="margin-top: 8px; display: block;">Toplam Yüzde: <span
+                                    id="totalTPPercent">0</span>%</small>
                         </div>
 
                         <!-- Win Trade Details -->
@@ -323,6 +368,50 @@
                     <button type="submit" class="btn-primary">Kaydet</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Calculator Modal -->
+    <div class="modal" id="calcModal">
+        <div class="modal-overlay" id="calcModalOverlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🧮 Kâr Hesaplayıcı</h3>
+                <button class="modal-close" id="calcModalClose">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="calcRiskAmount">Risk Miktarı (TL)</label>
+                    <input type="number" id="calcRiskAmount" placeholder="Örn: 250">
+                    <small>İşlem başına riske edilen tutar</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="calcRRR">Hedef RRR</label>
+                    <input type="number" id="calcRRR" placeholder="Örn: 2.5" step="0.1">
+                    <small>Kâr almayı planladığınız R seviyesi</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="calcPercent">Kapanış Yüzdesi (%)</label>
+                    <input type="number" id="calcPercent" placeholder="Örn: 90" max="100">
+                    <small>Bu seviyede kapatılacak pozisyon oranı</small>
+                </div>
+
+                <div class="calc-result-box">
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">Tahmini Kâr</div>
+                    <div class="calc-result-value" id="calcResult">0 ₺</div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" id="calculateBtn" style="width: 100%">Hesapla</button>
+                </div>
+            </div>
         </div>
     </div>
 
