@@ -602,21 +602,8 @@ small {
     color: var(--accent-success);
 }
 
-.trade-result-badge.loss {
-    background-color: rgba(248, 81, 73, 0.15);
-    color: var(--accent-danger);
-}
-
-.trade-result-badge.be {
-    background-color: rgba(139, 148, 158, 0.15);
-    color: var(--text-secondary);
-}
-
-.strategy-badge {
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
+font-size: 0.75rem;
+font-weight: 600;
 }
 
 .strategy-badge.compliant {
