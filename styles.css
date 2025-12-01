@@ -8,7 +8,6 @@
 }
 
 :root {
-    /* Colors */
     --bg-dark: #0f1115;
     --bg-card: #161b22;
     --bg-input: #0d1117;
@@ -20,21 +19,16 @@
     --accent-warning: #d29922;
     --accent-info: #58a6ff;
     --border-color: #30363d;
-
-    /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
-
-    /* Radius */
     --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 12px;
 }
 
-/* Light Mode Overrides */
 :root[data-theme="light"] {
     --bg-dark: #ffffff;
     --bg-card: #f6f8fa;
@@ -54,9 +48,6 @@ body {
     transition: background-color 0.3s, color 0.3s;
 }
 
-/* ===================================
-   LAYOUT
-   =================================== */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -150,9 +141,6 @@ body {
     color: var(--text-primary);
 }
 
-/* ===================================
-   SECTIONS
-   =================================== */
 section {
     margin-bottom: var(--spacing-xl);
 }
@@ -171,7 +159,6 @@ section {
     letter-spacing: 0.05em;
 }
 
-/* Target Section */
 .target-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -184,8 +171,6 @@ section {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
-    position: relative;
-    overflow: hidden;
 }
 
 .target-card.primary {
@@ -227,7 +212,6 @@ section {
     border: 1px solid var(--border-color);
 }
 
-/* Progress Bar */
 .progress-container {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -268,7 +252,6 @@ section {
     transition: width 1s ease-out;
 }
 
-/* Chart Section */
 .chart-container {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -277,7 +260,6 @@ section {
     height: 300px;
 }
 
-/* Metrics Grid */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -327,7 +309,6 @@ section {
     margin-top: 2px;
 }
 
-/* Feedback Section */
 .feedback-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -383,7 +364,6 @@ section {
     white-space: pre-line;
 }
 
-/* Form Section */
 .trade-form {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -459,7 +439,6 @@ small {
     background-color: #238636;
 }
 
-/* Calculator Button */
 .calculator-btn {
     background: transparent;
     border: 1px solid var(--accent-primary);
@@ -478,7 +457,6 @@ small {
     background-color: rgba(88, 166, 255, 0.1);
 }
 
-/* Multi TP Styles */
 .multi-tp-container {
     background-color: var(--bg-dark);
     border: 1px solid var(--border-color);
@@ -526,7 +504,6 @@ small {
     color: var(--accent-danger);
 }
 
-/* Calculator Result Box */
 .calc-result-box {
     background-color: var(--bg-dark);
     border: 1px solid var(--border-color);
@@ -543,9 +520,6 @@ small {
     font-family: 'JetBrains Mono', monospace;
 }
 
-/* ===================================
-   HISTORY SECTION
-   =================================== */
 .history-container {
     display: flex;
     flex-direction: column;
@@ -582,7 +556,6 @@ small {
     color: var(--accent-danger);
 }
 
-/* Trade Item */
 .trade-item {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -719,7 +692,6 @@ small {
     color: var(--accent-danger);
 }
 
-/* Pagination */
 .pagination-container {
     display: flex;
     justify-content: center;
@@ -759,9 +731,6 @@ small {
     font-size: 0.9rem;
 }
 
-/* ===================================
-   MODAL
-   =================================== */
 .modal {
     display: none;
     position: fixed;
@@ -909,45 +878,92 @@ small {
     }
 }
 
-/* ===================================
-   RESPONSIVE - MOBILE OPTIMIZATION
-   =================================== */
+/* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
-
-    /* Container & Spacing */
     .container {
         padding: 0 var(--spacing-sm);
     }
 
     section {
-        margin-bottom: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
     }
 
-    /* Header */
+    .header {
+        padding: var(--spacing-sm) 0;
+        margin-bottom: var(--spacing-md);
+    }
+
     .header-content {
-        flex-direction: column;
         gap: var(--spacing-sm);
-        align-items: flex-start;
+    }
+
+    .logo {
+        gap: var(--spacing-sm);
+        flex: 1;
+        min-width: 0;
+    }
+
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .logo-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .logo-text h1 {
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .logo-text p {
+        font-size: 0.65rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .header-actions {
-        width: 100%;
-        justify-content: space-between;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .theme-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .theme-btn svg {
+        width: 16px;
+        height: 16px;
     }
 
     .settings-btn {
-        flex: 1;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        gap: 4px;
     }
 
-    /* Section Headers */
+    .settings-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
     }
 
     .section-header h2 {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
     .calculator-btn {
@@ -955,32 +971,42 @@ small {
         justify-content: center;
     }
 
-    /* Target Grid */
+    .target-badge {
+        font-size: 0.7rem;
+        padding: 3px 10px;
+    }
+
     .target-grid {
         grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .target-card {
+        padding: var(--spacing-md);
     }
 
     .card-value {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 
-    /* Chart */
     .chart-container {
-        height: 250px;
+        height: 220px;
     }
 
-    /* Metrics Grid */
     .metrics-grid {
         grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
     }
 
-    /* Form Grid */
+    .metric-card {
+        padding: var(--spacing-sm);
+    }
+
     .form-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
     }
 
-    /* Multi TP Rows - MOBILE OPTIMIZED */
     .tp-row {
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
@@ -992,57 +1018,30 @@ small {
         position: relative;
     }
 
-    .tp-row .form-group {
-        margin: 0;
-    }
-
     .tp-row input {
-        width: 100%;
         font-size: 16px;
-        /* Prevents zoom on iOS */
     }
 
     .remove-tp-btn {
         position: absolute;
         top: var(--spacing-sm);
         right: var(--spacing-sm);
-        z-index: 1;
     }
 
     .add-tp-btn {
         width: 100%;
-        padding: var(--spacing-sm);
-        text-align: center;
     }
 
-    .form-header-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--spacing-sm);
-    }
-
-    .form-header-row label {
-        font-size: 0.9rem;
-    }
-
-    /* Trade Details */
     .trade-details {
         grid-template-columns: 1fr;
     }
 
-    /* Trade Item */
     .trade-header {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--spacing-sm);
     }
 
-    .trade-badges {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    /* Pagination */
     .pagination-container {
         flex-direction: column;
         gap: var(--spacing-sm);
@@ -1050,20 +1049,14 @@ small {
 
     .pagination-btn {
         width: 100%;
-        justify-content: center;
     }
 
-    /* Modal */
     .modal-content {
         width: 95%;
-        max-height: 85vh;
-        padding: var(--spacing-md);
     }
 
-    /* Form Actions */
     .form-actions {
         flex-direction: column;
-        gap: var(--spacing-sm);
     }
 
     .btn-primary,
@@ -1072,47 +1065,9 @@ small {
         width: 100%;
     }
 
-    /* Feedback */
-    .feedback-card {
-        flex-direction: column;
-    }
-
-    .feedback-icon {
-        font-size: 1.2rem;
-    }
-
-    .feedback-title {
-        font-size: 0.85rem;
-    }
-
-    .feedback-message {
-        font-size: 0.8rem;
-    }
-
-    /* Logo */
-    .logo-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
-    }
-
-    .logo-text h1 {
-        font-size: 1.1rem;
-    }
-
-    .logo-text p {
-        font-size: 0.75rem;
-    }
-
-    /* Input & Select - iOS Zoom Prevention */
     input,
     select,
     textarea {
         font-size: 16px;
-    }
-
-    /* Calculator Result */
-    .calc-result-value {
-        font-size: 1.3rem;
     }
 }
